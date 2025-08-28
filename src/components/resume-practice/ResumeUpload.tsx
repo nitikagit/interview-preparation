@@ -3,8 +3,13 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, FileText, Loader2, X } from 'lucide-react';
+import { Upload, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+// Set worker path for pdfjs
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 type ResumeUploadProps = {
   onUpload: (fileText: string) => void;
@@ -20,15 +25,41 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type === 'text/plain') {
-        setFileName(file.name);
-        const text = await file.text();
-        setFileContent(text);
-      } else {
+      setFileName(file.name);
+      setFileContent(''); // Reset content while processing
+
+      try {
+        if (file.type === 'text/plain') {
+          const text = await file.text();
+          setFileContent(text);
+        } else if (file.type === 'application/pdf') {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+          let text = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(item => (item as any).str).join(' ');
+          }
+          setFileContent(text);
+        } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+          const arrayBuffer = await file.arrayBuffer();
+          const { value } = await mammoth.extractRawText({ arrayBuffer });
+          setFileContent(value);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Invalid File Type',
+            description: 'Please upload a .txt, .pdf, .doc, or .docx file.',
+          });
+          resetFile();
+        }
+      } catch (error) {
+        console.error('Error parsing file:', error);
         toast({
           variant: 'destructive',
-          title: 'Invalid File Type',
-          description: 'For now, we only support .txt files. Please upload your resume as a plain text file.',
+          title: 'File Parsing Error',
+          description: 'Could not read the content of the file. Please ensure it is not corrupted.',
         });
         resetFile();
       }
@@ -55,7 +86,7 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
         Resume-Based Practice
       </h1>
       <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
-        Upload your resume as a .txt file. Our AI will analyze it and generate personalized questions to help you prepare.
+        Upload your resume. Our AI will analyze it and generate personalized questions to help you prepare.
       </p>
 
       <Card className="w-full max-w-lg">
@@ -64,7 +95,7 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
             <Upload className="w-6 h-6" />
             Upload Your Resume
           </CardTitle>
-          <CardDescription>Please select a .txt file</CardDescription>
+          <CardDescription>Select a .txt, .pdf, .doc, or .docx file</CardDescription>
         </CardHeader>
         <CardContent>
           <div
@@ -75,7 +106,7 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept=".txt"
+              accept=".txt,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="hidden"
               disabled={loading}
             />
@@ -99,7 +130,7 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
                   <Upload className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <p className="font-semibold">Click to browse or drag & drop</p>
-                <p className="text-sm text-muted-foreground mt-1">TXT format only</p>
+                <p className="text-sm text-muted-foreground mt-1">TXT, PDF, DOC, DOCX formats supported</p>
               </>
             )}
           </div>
