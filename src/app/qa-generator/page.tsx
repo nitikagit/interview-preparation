@@ -37,6 +37,12 @@ export default function QAGeneratorPage() {
 
         {error && <div className="mt-8 text-center text-destructive">{error}</div>}
         
+        {isLoading && (
+          <div className="mt-12 text-center">
+            <p>Loading...</p>
+          </div>
+        )}
+
         {qaData && (
           <div className="mt-12">
             <h2 className="text-2xl font-bold text-center mb-6">Generated Q&A</h2>

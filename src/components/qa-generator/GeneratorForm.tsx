@@ -1,10 +1,9 @@
 'use client';
 
-import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import type { GenerateQAOutput } from '@/ai/flows/generate-qa';
 
 import { generateQandA } from '@/lib/actions';
@@ -82,47 +81,49 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
 
 
   return (
-    <form 
-      ref={formRef} 
-      onSubmit={form.handleSubmit(handleFormSubmit)}
-      noValidate
-    >
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Customization</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="role">Job Role or Industry</Label>
-            <Input
-              id="role"
-              placeholder="e.g., Software Engineer, Marketing Manager"
-              {...form.register('role')}
-              disabled={isLoading}
-            />
-            {form.formState.errors.role && (
-              <p className="text-sm text-destructive">{form.formState.errors.role.message}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="numberOfQuestions">Number of Questions</Label>
-            <Input
-              id="numberOfQuestions"
-              type="number"
-              min="1"
-              max="10"
-              {...form.register('numberOfQuestions')}
-              disabled={isLoading}
-            />
-             {form.formState.errors.numberOfQuestions && (
-              <p className="text-sm text-destructive">{form.formState.errors.numberOfQuestions.message}</p>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter>
-          <SubmitButton isLoading={isLoading} />
-        </CardFooter>
-      </Card>
-    </form>
+    <div>
+      <form 
+        ref={formRef} 
+        onSubmit={form.handleSubmit(handleFormSubmit)}
+        noValidate
+      >
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Customization</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="role">Job Role or Industry</Label>
+              <Input
+                id="role"
+                placeholder="e.g., Software Engineer, Marketing Manager"
+                {...form.register('role')}
+                disabled={isLoading}
+              />
+              {form.formState.errors.role && (
+                <p className="text-sm text-destructive">{form.formState.errors.role.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="numberOfQuestions">Number of Questions</Label>
+              <Input
+                id="numberOfQuestions"
+                type="number"
+                min="1"
+                max="10"
+                {...form.register('numberOfQuestions')}
+                disabled={isLoading}
+              />
+               {form.formState.errors.numberOfQuestions && (
+                <p className="text-sm text-destructive">{form.formState.errors.numberOfQuestions.message}</p>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <SubmitButton isLoading={isLoading} />
+          </CardFooter>
+        </Card>
+      </form>
+    </div>
   );
 }
