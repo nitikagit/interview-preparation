@@ -4,7 +4,7 @@ import { useFormState, useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { GenerateQAOutput } from '@/ai/flows/generate-qa';
 
 import { generateQandA } from '@/lib/actions';
@@ -43,6 +43,7 @@ function SubmitButton() {
 
 export default function GeneratorForm({ onGenerated, setLoading, isLoading }: GeneratorFormProps) {
   const { toast } = useToast();
+  
   const [state, formAction] = useFormState(generateQandA, {
     error: undefined,
     data: undefined,
@@ -54,15 +55,21 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
       role: '',
       numberOfQuestions: 5,
     },
+    mode: 'onSubmit'
   });
+
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     setLoading(isLoading);
   }, [isLoading, setLoading]);
   
   useEffect(() => {
+    setLoading(false);
     if (state.error) {
-      const errorMsg = typeof state.error === 'string' ? state.error : 'An unexpected error occurred.';
+      const errorMsg = typeof state.error === 'string' 
+        ? state.error 
+        : (state.error as any).role?.[0] || (state.error as any).numberOfQuestions?.[0] || 'An unexpected error occurred.';
       toast({
         variant: 'destructive',
         title: 'Generation Failed',
@@ -72,25 +79,21 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
     }
     if (state.data) {
       onGenerated(state.data as GenerateQAOutput);
+      form.reset();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  const onFormAction = (formData: FormData) => {
-    const validation = formSchema.safeParse({
-        role: formData.get('role'),
-        numberOfQuestions: formData.get('numberOfQuestions'),
-    });
-    if (!validation.success) {
-        form.trigger();
-        return;
-    }
-    setLoading(true);
-    formAction(formData);
-  }
-
   return (
-    <form action={onFormAction} noValidate>
+    <form 
+      ref={formRef} 
+      action={formAction} 
+      onSubmit={form.handleSubmit(() => {
+          setLoading(true);
+          formAction(new FormData(formRef.current!));
+      })} 
+      noValidate
+    >
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Customization</CardTitle>
@@ -106,9 +109,6 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
             {form.formState.errors.role && (
               <p className="text-sm text-destructive">{form.formState.errors.role.message}</p>
             )}
-             {typeof state.error !== 'string' && state.error?.role && (
-              <p className="text-sm text-destructive">{state.error.role[0]}</p>
-            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="numberOfQuestions">Number of Questions</Label>
@@ -121,9 +121,6 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
             />
              {form.formState.errors.numberOfQuestions && (
               <p className="text-sm text-destructive">{form.formState.errors.numberOfQuestions.message}</p>
-            )}
-            {typeof state.error !== 'string' && state.error?.numberOfQuestions && (
-              <p className="text-sm text-destructive">{state.error.numberOfQuestions[0]}</p>
             )}
           </div>
         </CardContent>
