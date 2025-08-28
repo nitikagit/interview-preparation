@@ -65,8 +65,8 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
   }, [isLoading, setLoading]);
   
   useEffect(() => {
-    setLoading(false);
     if (state.error) {
+      setLoading(false);
       const errorMsg = typeof state.error === 'string' 
         ? state.error 
         : (state.error as any).role?.[0] || (state.error as any).numberOfQuestions?.[0] || 'An unexpected error occurred.';
@@ -78,20 +78,28 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
       onGenerated(null, errorMsg);
     }
     if (state.data) {
+      setLoading(false);
       onGenerated(state.data as GenerateQAOutput);
       form.reset();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
+  const { formState: { isSubmitting } } = form;
+
+  const handleFormSubmit = form.handleSubmit(() => {
+    if (formRef.current) {
+        setLoading(true);
+        formAction(new FormData(formRef.current));
+    }
+  });
+
+
   return (
     <form 
       ref={formRef} 
       action={formAction} 
-      onSubmit={form.handleSubmit(() => {
-          setLoading(true);
-          formAction(new FormData(formRef.current!));
-      })} 
+      onSubmit={handleFormSubmit}
       noValidate
     >
       <Card className="w-full">
@@ -105,6 +113,7 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
               id="role"
               placeholder="e.g., Software Engineer, Marketing Manager"
               {...form.register('role')}
+              disabled={isSubmitting}
             />
             {form.formState.errors.role && (
               <p className="text-sm text-destructive">{form.formState.errors.role.message}</p>
@@ -118,6 +127,7 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
               min="1"
               max="10"
               {...form.register('numberOfQuestions')}
+              disabled={isSubmitting}
             />
              {form.formState.errors.numberOfQuestions && (
               <p className="text-sm text-destructive">{form.formState.errors.numberOfQuestions.message}</p>
