@@ -40,9 +40,9 @@ const prompt = ai.definePrompt({
 Role/Industry: {{{role}}}
 Number of Questions: {{{numberOfQuestions}}}
 
-Generate questions and answers that are relevant and insightful for the given role. The answer should be in detail. Do not leave any fields empty.
+Generate questions and answers that are relevant and insightful for the given role. The answer should be detailed.
 
-Format your response as a JSON object conforming to the schema.`, 
+Format your response as a JSON object conforming to the schema.`,
 });
 
 const generateQAFlow = ai.defineFlow(

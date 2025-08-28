@@ -20,7 +20,7 @@ const formSchema = z.object({
   numberOfQuestions: z.coerce
     .number()
     .min(1, { message: 'Please generate at least 1 question.' })
-    .max(20, { message: 'You can generate a maximum of 20 questions.' }),
+    .max(10, { message: 'You can generate a maximum of 10 questions.' }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -108,7 +108,7 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
               id="numberOfQuestions"
               type="number"
               min="1"
-              max="20"
+              max="10"
               {...form.register('numberOfQuestions')}
             />
              {form.formState.errors.numberOfQuestions && (
