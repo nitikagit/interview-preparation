@@ -7,7 +7,7 @@ import { generateQA } from '@/ai/flows/generate-qa';
 
 const resumeSchema = z.object({
   resumeText: z.string().min(50, 'Resume text is too short.'),
-  numberOfQuestions: z.coerce.number().min(1).max(10),
+  numberOfQuestions: z.coerce.number().min(1).max(10).default(5),
 });
 
 export async function generateResumeQuestions(prevState: any, formData: FormData) {

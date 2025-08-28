@@ -25,6 +25,8 @@ export default function ResumePracticePage() {
     setResumeText(fileText);
     const formData = new FormData();
     formData.append('resumeText', fileText);
+    // Always generate 5 questions by default
+    formData.append('numberOfQuestions', '5');
 
     const result = await generateResumeQuestions(null, formData);
 
