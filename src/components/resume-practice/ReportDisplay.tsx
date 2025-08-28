@@ -4,9 +4,8 @@ import type { AnalysisReportOutput } from '@/ai/flows/answer-analysis-report';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { CheckCircle, BarChart, BookOpen, Clock, BrainCircuit, RotateCcw } from 'lucide-react';
-import { Bar, BarChart as RechartsBarChart, Line, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { Bar, BarChart as RechartsBarChart, Line, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, ReferenceLine, Label as RechartsLabel } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 type ReportDisplayProps = {
@@ -14,7 +13,7 @@ type ReportDisplayProps = {
   onRestart: () => void;
 };
 
-const ScoreChart = ({ data, dataKey, label, color, icon: Icon }: { data: any[], dataKey: string, label: string, color: string, icon: React.ElementType }) => (
+const ScoreChart = ({ data, dataKey, label, color, icon: Icon, average }: { data: any[], dataKey: string, label: string, color: string, icon: React.ElementType, average: number }) => (
   <Card>
     <CardHeader>
       <CardTitle className="flex items-center gap-2">
@@ -24,18 +23,21 @@ const ScoreChart = ({ data, dataKey, label, color, icon: Icon }: { data: any[], 
     </CardHeader>
     <CardContent>
       <ChartContainer config={{ [dataKey]: { label, color } }} className="h-[200px] w-full">
-        <RechartsBarChart accessibilityLayer data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <RechartsBarChart accessibilityLayer data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
           <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 100]} />
           <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
           <Bar dataKey={dataKey} fill={`var(--color-${dataKey})`} radius={4} />
+          <ReferenceLine y={average} stroke="hsl(var(--foreground))" strokeDasharray="3 3">
+            <RechartsLabel value={`Avg: ${average.toFixed(0)}`} position="right" fill="hsl(var(--muted-foreground))" fontSize={12} />
+          </ReferenceLine>
         </RechartsBarChart>
       </ChartContainer>
     </CardContent>
   </Card>
 );
 
-const TimeChart = ({ data, icon: Icon }: { data: any[], icon: React.ElementType }) => (
+const TimeChart = ({ data, icon: Icon, average }: { data: any[], icon: React.ElementType, average: number }) => (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -45,11 +47,14 @@ const TimeChart = ({ data, icon: Icon }: { data: any[], icon: React.ElementType 
       </CardHeader>
       <CardContent>
         <ChartContainer config={{ time: { label: "Time (s)", color: "hsl(var(--primary))" } }} className="h-[200px] w-full">
-          <RechartsLineChart accessibilityLayer data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <RechartsLineChart accessibilityLayer data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
             <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" nameKey="time" />} />
             <Line type="monotone" dataKey="time" stroke="var(--color-time)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-time)" }} />
+            <ReferenceLine y={average} stroke="hsl(var(--foreground))" strokeDasharray="3 3">
+                <RechartsLabel value={`Avg: ${average.toFixed(0)}s`} position="right" fill="hsl(var(--muted-foreground))" fontSize={12} />
+            </ReferenceLine>
           </RechartsLineChart>
         </ChartContainer>
       </CardContent>
@@ -68,6 +73,18 @@ export default function ReportDisplay({ report, onRestart }: ReportDisplayProps)
     relevance: q.relevanceScore,
     time: q.timeTaken,
   }));
+  
+  const calculateAverage = (key: keyof (typeof chartData)[0]) => {
+      if (chartData.length === 0) return 0;
+      const total = chartData.reduce((acc, item) => acc + (item[key] as number), 0);
+      return total / chartData.length;
+  };
+  
+  const avgVocabulary = calculateAverage('vocabulary');
+  const avgGrammar = calculateAverage('grammar');
+  const avgRelevance = calculateAverage('relevance');
+  const avgTime = calculateAverage('time');
+
 
   return (
     <div className="space-y-8">
@@ -94,10 +111,10 @@ export default function ReportDisplay({ report, onRestart }: ReportDisplayProps)
       <div>
         <h2 className="text-2xl font-bold text-center mb-6">Performance Metrics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ScoreChart data={chartData} dataKey="vocabulary" label="Vocabulary" color="hsl(var(--chart-1))" icon={BookOpen} />
-            <ScoreChart data={chartData} dataKey="grammar" label="Grammar" color="hsl(var(--chart-2))" icon={CheckCircle} />
-            <ScoreChart data={chartData} dataKey="relevance" label="Relevance" color="hsl(var(--chart-3))" icon={BrainCircuit} />
-            <TimeChart data={chartData} icon={Clock} />
+            <ScoreChart data={chartData} dataKey="vocabulary" label="Vocabulary" color="hsl(var(--chart-1))" icon={BookOpen} average={avgVocabulary} />
+            <ScoreChart data={chartData} dataKey="grammar" label="Grammar" color="hsl(var(--chart-2))" icon={CheckCircle} average={avgGrammar} />
+            <ScoreChart data={chartData} dataKey="relevance" label="Relevance" color="hsl(var(--chart-3))" icon={BrainCircuit} average={avgRelevance} />
+            <TimeChart data={chartData} icon={Clock} average={avgTime}/>
         </div>
       </div>
       
