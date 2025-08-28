@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,7 +44,7 @@ function SubmitButton() {
 export default function GeneratorForm({ onGenerated, setLoading, isLoading }: GeneratorFormProps) {
   const { toast } = useToast();
   
-  const [state, formAction] = useFormState(generateQandA, {
+  const [state, formAction] = useActionState(generateQandA, {
     error: undefined,
     data: undefined,
   });
