@@ -20,12 +20,11 @@ export default function ResumePracticePage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleResumeUpload = async (fileText: string, numQuestions: number) => {
+  const handleResumeUpload = async (fileText: string) => {
     setLoading(true);
     setResumeText(fileText);
     const formData = new FormData();
     formData.append('resumeText', fileText);
-    formData.append('numberOfQuestions', numQuestions.toString());
 
     const result = await generateResumeQuestions(null, formData);
 

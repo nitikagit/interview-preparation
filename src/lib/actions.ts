@@ -7,14 +7,12 @@ import { generateQA } from '@/ai/flows/generate-qa';
 
 const resumeSchema = z.object({
   resumeText: z.string().min(50, 'Resume text is too short.'),
-  numberOfQuestions: z.coerce.number().min(1, { message: 'Please generate at least 1 question.' }).max(10, { message: 'You can generate a maximum of 10 questions.' }),
 });
 
 export async function generateResumeQuestions(prevState: any, formData: FormData) {
   try {
     const validatedFields = resumeSchema.safeParse({
       resumeText: formData.get('resumeText'),
-      numberOfQuestions: formData.get('numberOfQuestions'),
     });
 
     if (!validatedFields.success) {
@@ -23,7 +21,10 @@ export async function generateResumeQuestions(prevState: any, formData: FormData
       };
     }
 
-    const result = await resumeQuestionGenerator(validatedFields.data);
+    const result = await resumeQuestionGenerator({
+        resumeText: validatedFields.data.resumeText,
+        numberOfQuestions: 5, // Defaulting to 5 questions
+    });
     return { data: result };
   } catch (error) {
     console.error(error);

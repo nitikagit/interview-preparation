@@ -3,8 +3,6 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Upload, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -14,14 +12,13 @@ import mammoth from 'mammoth';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 type ResumeUploadProps = {
-  onUpload: (fileText: string, numQuestions: number) => void;
+  onUpload: (fileText: string) => void;
   loading: boolean;
 };
 
 export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
-  const [numQuestions, setNumQuestions] = useState(5);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -71,7 +68,7 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
 
   const handleUpload = () => {
     if (fileContent) {
-      onUpload(fileContent, numQuestions);
+      onUpload(fileContent);
     }
   };
 
@@ -84,8 +81,7 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
   };
 
   return (
-    <div>
-      <div className="flex flex-col items-center text-center">
+    <div className="flex flex-col items-center text-center">
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
           Resume-Based Practice
         </h1>
@@ -101,7 +97,7 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
             </CardTitle>
             <CardDescription>Select a .txt, .pdf, .doc, or .docx file</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <div
               className="border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors"
               onClick={() => fileInputRef.current?.click()}
@@ -138,19 +134,6 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
                 </>
               )}
             </div>
-            <div className="space-y-2 text-left">
-              <Label htmlFor="numQuestions">Number of Questions</Label>
-              <Input
-                id="numQuestions"
-                type="number"
-                min="1"
-                max="10"
-                value={numQuestions}
-                onChange={(e) => setNumQuestions(Number(e.target.value))}
-                disabled={loading}
-                className="max-w-xs"
-              />
-            </div>
           </CardContent>
         </Card>
         <Button
@@ -169,6 +152,5 @@ export default function ResumeUpload({ onUpload, loading }: ResumeUploadProps) {
           )}
         </Button>
       </div>
-    </div>
   );
 }
