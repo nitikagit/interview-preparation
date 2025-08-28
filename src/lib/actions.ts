@@ -12,6 +12,9 @@ const resumeSchema = z.object({
 
 export async function generateResumeQuestions(prevState: any, formData: FormData) {
   try {
+    if (!process.env.GEMINI_API_KEY) {
+      return { error: 'Missing API key. Please add your Gemini API key to the .env file.' };
+    }
     const validatedFields = resumeSchema.safeParse({
       resumeText: formData.get('resumeText'),
       numberOfQuestions: formData.get('numberOfQuestions'),
@@ -30,7 +33,7 @@ export async function generateResumeQuestions(prevState: any, formData: FormData
     return { data: result };
   } catch (error) {
     console.error(error);
-    return { error: 'Failed to generate questions. Please try again.' };
+    return { error: 'Failed to generate questions. Please check your API key and try again.' };
   }
 }
 
@@ -45,6 +48,9 @@ const analysisSchema = z.object({
 
 export async function analyzeSubmittedAnswers(data: AnalyzeAnswersInput) {
   try {
+    if (!process.env.GEMINI_API_KEY) {
+      return { error: 'Missing API key. Please add your Gemini API key to the .env file.' };
+    }
     const validatedData = analysisSchema.safeParse(data);
     if (!validatedData.success) {
       throw new Error('Invalid input for analysis.');
@@ -54,7 +60,7 @@ export async function analyzeSubmittedAnswers(data: AnalyzeAnswersInput) {
     return { data: report };
   } catch (error) {
     console.error(error);
-    return { error: 'Failed to generate report. Please try again.' };
+    return { error: 'Failed to generate report. Please check your API key and try again.' };
   }
 }
 
@@ -65,6 +71,9 @@ const qaSchema = z.object({
 
 export async function generateQandA(prevState: any, formData: FormData) {
     try {
+        if (!process.env.GEMINI_API_KEY) {
+          return { error: 'Missing API key. Please add your Gemini API key to the .env file.' };
+        }
         const validatedFields = qaSchema.safeParse({
             role: formData.get('role'),
             numberOfQuestions: formData.get('numberOfQuestions'),
@@ -80,6 +89,6 @@ export async function generateQandA(prevState: any, formData: FormData) {
         return { data: result };
     } catch (error) {
         console.error(error);
-        return { error: 'Failed to generate Q&A. Please try again.' };
+        return { error: 'Failed to generate Q&A. Please check your API key and try again.' };
     }
 }
