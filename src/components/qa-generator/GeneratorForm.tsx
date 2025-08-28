@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,11 +31,10 @@ type GeneratorFormProps = {
   isLoading: boolean;
 };
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full bg-gradient-to-r from-primary to-accent text-white">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+    <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-primary to-accent text-white">
+      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
       Generate Q&A
     </Button>
   );
@@ -44,11 +43,6 @@ function SubmitButton() {
 export default function GeneratorForm({ onGenerated, setLoading, isLoading }: GeneratorFormProps) {
   const { toast } = useToast();
   
-  const [state, formAction] = useActionState(generateQandA, {
-    error: undefined,
-    data: undefined,
-  });
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,14 +53,17 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
   });
 
   const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    setLoading(isLoading);
-  }, [isLoading, setLoading]);
   
-  useEffect(() => {
+  const handleFormSubmit = async (values: FormValues) => {
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('role', values.role);
+    formData.append('numberOfQuestions', values.numberOfQuestions.toString());
+
+    const state = await generateQandA(null, formData);
+
+    setLoading(false);
     if (state.error) {
-      setLoading(false);
       const errorMsg = typeof state.error === 'string' 
         ? state.error 
         : (state.error as any).role?.[0] || (state.error as any).numberOfQuestions?.[0] || 'An unexpected error occurred.';
@@ -78,28 +75,16 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
       onGenerated(null, errorMsg);
     }
     if (state.data) {
-      setLoading(false);
       onGenerated(state.data as GenerateQAOutput);
       form.reset();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
-
-  const { formState: { isSubmitting } } = form;
-
-  const handleFormSubmit = form.handleSubmit(() => {
-    if (formRef.current) {
-        setLoading(true);
-        formAction(new FormData(formRef.current));
-    }
-  });
+  };
 
 
   return (
     <form 
       ref={formRef} 
-      action={formAction} 
-      onSubmit={handleFormSubmit}
+      onSubmit={form.handleSubmit(handleFormSubmit)}
       noValidate
     >
       <Card className="w-full">
@@ -113,7 +98,7 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
               id="role"
               placeholder="e.g., Software Engineer, Marketing Manager"
               {...form.register('role')}
-              disabled={isSubmitting}
+              disabled={isLoading}
             />
             {form.formState.errors.role && (
               <p className="text-sm text-destructive">{form.formState.errors.role.message}</p>
@@ -127,7 +112,7 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
               min="1"
               max="10"
               {...form.register('numberOfQuestions')}
-              disabled={isSubmitting}
+              disabled={isLoading}
             />
              {form.formState.errors.numberOfQuestions && (
               <p className="text-sm text-destructive">{form.formState.errors.numberOfQuestions.message}</p>
@@ -135,7 +120,7 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
           </div>
         </CardContent>
         <CardFooter>
-          <SubmitButton />
+          <SubmitButton isLoading={isLoading} />
         </CardFooter>
       </Card>
     </form>
