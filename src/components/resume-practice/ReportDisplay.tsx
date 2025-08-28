@@ -4,9 +4,9 @@ import type { AnalysisReportOutput } from '@/ai/flows/answer-analysis-report';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, BarChart, BookOpen, Clock, BrainCircuit, RotateCcw } from 'lucide-react';
-import { Bar, BarChart as RechartsBarChart, Line, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, ReferenceLine, Label as RechartsLabel } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { CheckCircle, BarChart, BookOpen, Clock, BrainCircuit, RotateCcw, PieChart } from 'lucide-react';
+import { Bar, BarChart as RechartsBarChart, Line, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, ReferenceLine, Label as RechartsLabel, Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 
 type ReportDisplayProps = {
   report: AnalysisReportOutput;
@@ -61,6 +61,30 @@ const TimeChart = ({ data, icon: Icon, average }: { data: any[], icon: React.Ele
     </Card>
 );
 
+const AverageScorePieChart = ({ data, chartConfig }: { data: any[], chartConfig: any }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        <PieChart className="w-5 h-5" />
+        Average Score Distribution
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <ChartContainer config={chartConfig} className="h-[200px] w-full">
+        <RechartsPieChart>
+          <Tooltip content={<ChartTooltipContent hideLabel />} />
+          <Pie data={data} dataKey="score" nameKey="metric" innerRadius={50}>
+            {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+            ))}
+          </Pie>
+          <ChartLegend content={<ChartLegendContent />} />
+        </RechartsPieChart>
+      </ChartContainer>
+    </CardContent>
+  </Card>
+);
+
 
 export default function ReportDisplay({ report, onRestart }: ReportDisplayProps) {
   const { overallPerformance, questionBreakdown, overallRecommendations } = report;
@@ -85,6 +109,17 @@ export default function ReportDisplay({ report, onRestart }: ReportDisplayProps)
   const avgRelevance = calculateAverage('relevance');
   const avgTime = calculateAverage('time');
 
+  const pieChartData = [
+    { metric: "Vocabulary", score: avgVocabulary, fill: "hsl(var(--chart-1))" },
+    { metric: "Grammar", score: avgGrammar, fill: "hsl(var(--chart-2))" },
+    { metric: "Relevance", score: avgRelevance, fill: "hsl(var(--chart-3))" },
+  ];
+
+  const pieChartConfig = {
+    Vocabulary: { label: "Vocabulary", color: "hsl(var(--chart-1))" },
+    Grammar: { label: "Grammar", color: "hsl(var(--chart-2))" },
+    Relevance: { label: "Relevance", color: "hsl(var(--chart-3))" },
+  };
 
   return (
     <div className="space-y-8">
@@ -111,10 +146,11 @@ export default function ReportDisplay({ report, onRestart }: ReportDisplayProps)
       <div>
         <h2 className="text-2xl font-bold text-center mb-6">Performance Metrics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AverageScorePieChart data={pieChartData} chartConfig={pieChartConfig} />
+            <TimeChart data={chartData} icon={Clock} average={avgTime}/>
             <ScoreChart data={chartData} dataKey="vocabulary" label="Vocabulary" color="hsl(var(--chart-1))" icon={BookOpen} average={avgVocabulary} />
             <ScoreChart data={chartData} dataKey="grammar" label="Grammar" color="hsl(var(--chart-2))" icon={CheckCircle} average={avgGrammar} />
             <ScoreChart data={chartData} dataKey="relevance" label="Relevance" color="hsl(var(--chart-3))" icon={BrainCircuit} average={avgRelevance} />
-            <TimeChart data={chartData} icon={Clock} average={avgTime}/>
         </div>
       </div>
       
