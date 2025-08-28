@@ -6,6 +6,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, BarChart, BookOpen, Clock, BrainCircuit, RotateCcw } from 'lucide-react';
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 type ReportDisplayProps = {
   report: AnalysisReportOutput;
@@ -13,10 +15,6 @@ type ReportDisplayProps = {
 };
 
 const ScoreIndicator = ({ label, score, icon: Icon }: { label: string; score: number, icon: React.ElementType }) => {
-    let progressColor = 'bg-green-500';
-    if (score < 75) progressColor = 'bg-yellow-500';
-    if (score < 50) progressColor = 'bg-red-500';
-
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -33,20 +31,28 @@ const ScoreIndicator = ({ label, score, icon: Icon }: { label: string; score: nu
 export default function ReportDisplay({ report, onRestart }: ReportDisplayProps) {
   const { overallPerformance, questionBreakdown, overallRecommendations } = report;
 
-  const averageScores = questionBreakdown.reduce(
-    (acc, q) => {
-      acc.vocabulary += q.vocabularyScore;
-      acc.grammar += q.grammarScore;
-      acc.relevance += q.relevanceScore;
-      return acc;
-    },
-    { vocabulary: 0, grammar: 0, relevance: 0 }
-  );
+  const chartData = questionBreakdown.map((q, i) => ({
+    name: `Q${i + 1}`,
+    question: q.question,
+    vocabulary: q.vocabularyScore,
+    grammar: q.grammarScore,
+    relevance: q.relevanceScore,
+  }));
 
-  const numQuestions = questionBreakdown.length;
-  const avgVocab = Math.round(averageScores.vocabulary / numQuestions);
-  const avgGrammar = Math.round(averageScores.grammar / numQuestions);
-  const avgRelevance = Math.round(averageScores.relevance / numQuestions);
+  const chartConfig = {
+    vocabulary: {
+      label: "Vocabulary",
+      color: "hsl(var(--chart-1))",
+    },
+    grammar: {
+      label: "Grammar",
+      color: "hsl(var(--chart-2))",
+    },
+    relevance: {
+      label: "Relevance",
+      color: "hsl(var(--chart-3))",
+    },
+  }
 
   return (
     <div className="space-y-8">
@@ -76,21 +82,48 @@ export default function ReportDisplay({ report, onRestart }: ReportDisplayProps)
 
       <Card>
         <CardHeader>
-          <CardTitle>Average Scores</CardTitle>
+          <CardTitle>Performance Scores by Question</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-            <ScoreIndicator label="Vocabulary" score={avgVocab} icon={BookOpen} />
-            <ScoreIndicator label="Grammar" score={avgGrammar} icon={CheckCircle} />
-            <ScoreIndicator label="Relevance" score={avgRelevance} icon={BrainCircuit} />
+        <CardContent>
+          <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+            <RechartsBarChart accessibilityLayer data={chartData}>
+              <XAxis
+                dataKey="name"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+              />
+              <YAxis
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                domain={[0, 100]}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent 
+                    labelKey="question"
+                    indicator="dot"
+                />}
+              />
+              <Bar dataKey="vocabulary" fill="var(--color-vocabulary)" radius={4} />
+              <Bar dataKey="grammar" fill="var(--color-grammar)" radius={4} />
+              <Bar dataKey="relevance" fill="var(--color-relevance)" radius={4} />
+            </RechartsBarChart>
+          </ChartContainer>
         </CardContent>
       </Card>
       
       <div>
-        <h2 className="text-2xl font-bold text-center mb-6">Question Breakdown</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">Detailed Question Breakdown</h2>
         <Accordion type="single" collapsible className="w-full space-y-4">
           {questionBreakdown.map((item, index) => (
             <AccordionItem value={`item-${index}`} key={index} className="bg-card border rounded-lg px-4">
-              <AccordionTrigger className="text-left font-semibold hover:no-underline">{item.question}</AccordionTrigger>
+              <AccordionTrigger className="text-left font-semibold hover:no-underline">{`Question ${index + 1}: ${item.question}`}</AccordionTrigger>
               <AccordionContent className="space-y-6 pt-4">
                 <div>
                   <h4 className="font-semibold mb-2">Answer Analysis</h4>
