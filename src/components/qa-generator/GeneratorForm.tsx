@@ -77,12 +77,20 @@ export default function GeneratorForm({ onGenerated, setLoading, isLoading }: Ge
   }, [state]);
 
   const onFormAction = (formData: FormData) => {
+    const validation = formSchema.safeParse({
+        role: formData.get('role'),
+        numberOfQuestions: formData.get('numberOfQuestions'),
+    });
+    if (!validation.success) {
+        form.trigger();
+        return;
+    }
     setLoading(true);
     formAction(formData);
   }
 
   return (
-    <form action={onFormAction}>
+    <form action={onFormAction} noValidate>
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Customization</CardTitle>

@@ -54,8 +54,8 @@ export async function analyzeSubmittedAnswers(data: AnalyzeAnswersInput) {
 }
 
 const qaSchema = z.object({
-    role: z.string().min(2, 'Role must be at least 2 characters.'),
-    numberOfQuestions: z.coerce.number().min(1, 'Please generate at least 1 question.').max(10, 'You can generate a maximum of 10 questions.'),
+    role: z.string().min(2, { message: 'Role must be at least 2 characters.' }),
+    numberOfQuestions: z.coerce.number().min(1, { message: 'Please generate at least 1 question.' }).max(10, { message: 'You can generate a maximum of 10 questions.' }),
 });
 
 export async function generateQandA(prevState: any, formData: FormData) {
